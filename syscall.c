@@ -25,15 +25,20 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 static void halt (void);
 static void exit (int);
+static pid_t exec (const char *);
+static int wait (pid_t);
 static bool create (const char*, unsigned);
 static bool remove (const char*);
-static int wait (pid_t);
+static int open (const char *);
 static int filesize (int);
+static int read (int, void *, unsigned);
+static int write (int, const void *, unsigned);
+static void seek (int, unsigned);
+static unsigned tell (int);
+static void close (int);
 
 
-
-
-
+//terminates Pintos
 void
 halt (void)
 {
@@ -41,12 +46,30 @@ halt (void)
 }
 
 
+//terminates current user program, returning status to the kernel
 void
 exit (int status)
 {
    struct thread *cur = thread_current ();
 }
 
+//runs the executable whose name is given in the parameter and runs the new process's program id
+pid_t
+exec (const char *cmd_line)
+{
+
+}
+
+//waits for a child process pid and retrieves the child's exit status
+int
+wait (pid_t pid)
+{
+   
+   return process_wait(user_thread); //per the document.....we will implement code for process_wait in order to fulfill the wait() function
+}
+
+
+//creates a new file based on the parameters
 bool
 create (const char *file, unsigned initial_size)
 {
@@ -66,6 +89,7 @@ create (const char *file, unsigned initial_size)
 }
 
 
+//deletes the called file
 bool
 remove (const char *file)
 {
@@ -85,14 +109,14 @@ remove (const char *file)
 }
 
 
+//opens the given file
 int
-wait (pid_t user_thread)
+open (const char *file)
 {
-   
-   return process_wait(user_thread); //per the document.....we will implement code for process_wait in order to fulfill the wait() function
+
 }
 
-
+//returns the size of the file in bytes
 int
 filesize (int fd)
 {
@@ -118,6 +142,10 @@ valid_pointer (const void *ptr)
   return false;
 
 }
+
+
+
+
 
 
 
