@@ -24,6 +24,31 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned call_nr;
   int args[3];
 
+  typedef int syscall_function (int, int, int);
+  /* A system call */
+  struct syscall
+    {
+      size_t arg_cnt;          /* Number of arguments. */
+      syscall_function *func;  /* Implementation. */
+    };
+  /* Table of system calls. */
+  static const struct syscall syscall_table[] =
+    {
+      {0, (syscall_function *) halt},
+      {1, (syscall_function *) exit},
+      {1, (syscall_function *) exec},
+      {1, (syscall_function *) wait},
+      {2, (syscall_function *) create},
+      {1, (syscall_function *) remove},
+      {1, (syscall_function *) open},
+      {1, (syscall_function *) filesize},
+      {3, (syscall_function *) read},
+      {3, (syscall_function *) write},
+      {2, (syscall_function *) seek},
+      {1, (syscall_function *) tell},
+      {1, (syscall_function *) close}
+    }
+
   /* Get the system call. */
   copy_in (&call_nr, f->esp, sizeof call_nr);
   if (call_nr >= sizeof syscall_table / sizeof *syscall_table) 

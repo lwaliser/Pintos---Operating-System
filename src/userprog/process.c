@@ -491,7 +491,6 @@ setup_stack (void **esp, const char *file_name, char** ptr)
 
   
   
->>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 }
 
 /* Adds a mapping from user virtual address UPAGE to kernel
