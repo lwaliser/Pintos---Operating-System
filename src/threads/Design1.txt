@@ -1,0 +1,401 @@
+
+CIS 520 - Programming Project #1
+
+                   
+---- GROUP ----
+
+>> Fill in the names and email addresses of your group members.
+
+Luke Waliser waliser@ksu.edu
+Bryant Worcester bryantw@ksu.edu
+...
+
+---- PRELIMINARIES ----
+
+>> If you have any preliminary comments on your submission, notes for
+>> the TA, or extra credit, please give them here.
+
+>> Please cite any offline or online sources you consulted while
+>> preparing your submission, other than the Pintos documentation,
+>> course text, lecture notes, and course staff.
+
+** Busy-Wait
+   https://en.wikipedia.org/wiki/Real-time_operating_system
+
+** Somebody's online implementation of Pintos Project1
+   https://github.com/codyjack/OS-pintos
+
+                 ALARM CLOCK
+                 ===========
+
+---- DATA STRUCTURES ----
+
+>> A1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+Added to struct thread in thread.h
+   ** int64_t sleep_time;  /* How long to wait before executing */
+
+   ** struct list_elem sleep_elem;   /* List of threads that are sleeping/waiting */
+
+Added to timer.c
+   ** static struct list sleep_list; /* List of threads that are sleeping/waiting */
+
+   
+---- ALGORITHMS ----
+
+>> A2: Briefly describe what happens in a call to your timer_sleep(),
+>> including the effects of the timer interrupt handler.
+
+For the timer_sleep():
+  1.) The current thread's sleep_time is set to the given ticks plus the number of timer ticks since OS booted.
+  2.) Disable interrupts.
+  3.) The current thread is pushed to the sleep/wait list.
+  4.) Call thread_block().
+  5.) Re-enable interrupts.
+
+
+For timer_interrup(......):
+   1.) Use a for loop to check what threads on the list need to be awakened.
+   2.) If thread is BLOCKED, remove it from the sleep/wait list.
+   3.) Then unblock thread.
+
+>> A3: What steps are taken to minimize the amount of time spent in
+>> the timer interrupt handler?
+
+To minimize the amount of time spent in the timer interrupt handler, we use an ordered list of threads based on their sleep_time 
+that is constructed in the timer_sleep();
+
+---- SYNCHRONIZATION ----
+
+>> A4: How are race conditions avoided when multiple threads call
+>> timer_sleep() simultaneously?
+
+Race conditions are avoided because the operations are performed while the interrupt is disabled.
+
+>> A5: How are race conditions avoided when a timer interrupt occurs
+>> during a call to timer_sleep()?
+
+Race conditions are avoided because the operations are performed while the interrupt is disabled.
+
+---- RATIONALE ----
+
+>> A6: Why did you choose this design?  In what ways is it superior to
+>> other designs that you considered?
+
+We have always considered a design where we use a list to store the threads. We have been trying to successfully
+implement this design so we never focused on another. Using an ordered list of threads inside the functions
+seems reasonable and an ordered list is easy to traverse and check what threads need to be awakened. We don't know
+why the design is not working when trying to run it.
+
+
+             PRIORITY SCHEDULING
+             ===================
+
+---- DATA STRUCTURES ----
+
+>> B1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+Added to struct thread in thread.h
+   ** int orig_priority;    /*this keeps track of a thread's original priority before donation occurs*/
+
+   ** bool priority_donated;  /*want to keep track if a thread's priority was donated */
+
+   ** struct list locks;   /*this keeps track of all locks that a thread holds; it's needed for possibility of multiple donation*/
+   ** struct lock *blocked_lock  /*this is used for nested donation possibility to know what the next lock is*/
+
+Added to struct lock
+   ** list_elem elem_lock;  /*this is a list elem of lock*/
+
+   ** int priority_lock;  /*this is used in multiple donations*/
+
+Added in thread.h
+   #define LOCK_LEVEL 8  /*defines a constant representing how deep we go in the nested donation algorithm*/
+
+>> B2: Explain the data structure used to track priority donation.
+
+Considering the case when a thread acquires a lock, the acquired lock will be added to the thread's list of locks 
+it stores. This list of locks of the thread should be an ordered list such that the first lock in the list has the
+highest rank/priority and the last lock in the list has the lowest rank/priority. Considering the case when a thread releases
+a lock, that lock is removed from the thread's list of locks.
+
+Considering the case of single donation, when a lock is trying to be acquired, the priority of the thread that is trying to acquire
+the lock is checked, and the priority of the thread that has the lock is checked. If the priority of the thread that has the lock is lower
+than the priority of the thread that is trying to acquire the lock, then the thread that has the lock will be donated a higher priority such that it's 
+orig-priority is changed. However, the thread that does the priority donation does not have a change in its orig-priority. The thread that does the donation 
+though will have its priority_donated set to true whether it was true or false to begin with. The lock's priority_lock is set to the 
+donor thread's priority.
+
+Considering the case of nested/multiple donations, if the thread that received the donated priority in the above case is blocked by another lock,
+then the steps in the case above are basically repeated. The thread that received the donated priority in the above case will be the thread that now
+donates its priority to the thread whose lock is blocking that said thread. This case of nested/multiple donations is repeated until
+no thread is blocked by another thread. But since this iterative search through all the threads may take a long time, we will set a limit 
+on how deep we go in the nested donation. The suggested level is 8.
+
+An example of this in using (rough) ASCII art is shown below:
+
+Let's define Thread A as having priority 20 and it has lock 3.
+Let's define Thread B as having priority 30 and it has lock 5, and it acquires lock 3.
+Let's define Thread C as having priority 50, and it acquires lock 5.
+
+Step 1: Initial Values of Threads
+---------------------------------------------------------------
+                       Thread A's initial values
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          20                      *
+*     orig_priority        *          20                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 3}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                       Thread B's initial values
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 5}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                       Thread C's initial values
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          50                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         false                    *
+*     locks                *       {      }                   *
+_______________________________________________________________
+
+Step 2: Thread B acquires lock 3 from Thread A
+---------------------------------------------------------------
+                Thread A (where Thread B acquires lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          20                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         true                     *
+*     locks                *       {lock 3}                   *
+_______________________________________________________________
+ 
+---------------------------------------------------------------
+                Thread B (where Thread B acquires lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 5}                   *
+*     acquired lock        *       {lock 3}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread C (where Thread B acquires lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         false                    *
+*     locks                *       {      }                   *
+*     acquired lock        *       {      }                   *
+_______________________________________________________________
+
+Step 3: Thread C acquires lock 5
+---------------------------------------------------------------
+                Thread B (where Thread C acquires lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         true                     *
+*     locks                *       {lock 5}                   *
+*     acquired lock        *       {lock 3}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread C (where Thread C acquires lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          50                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         false                    *
+*     locks                *       {      }                   *
+*     acquired lock        *       {lock 5}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread A (where Thread C acquires lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          20                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         true                     *
+*     locks                *       {lock 3}                   *
+_______________________________________________________________
+
+Step 4: Thread A releases lock 3:
+---------------------------------------------------------------
+                Thread A (where Thread A releases lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          20                      *
+*     orig_priority        *          20                      *
+*     is_donated           *         false                    *
+*     locks                *       {      }                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread B (where Thread A releases lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         true                     *
+*     locks                *       {locks 3 and 5}            *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread C (where Thread A releases lock 3)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          50                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 5}                   *
+_______________________________________________________________
+
+Step 5: Thread B releases lock 5:
+---------------------------------------------------------------
+                Thread A (where Thread B releases lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          20                      *
+*     orig_priority        *          20                      *
+*     is_donated           *         false                    *
+*     locks                *       {      }                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread B (where Thread B releases lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          30                      *
+*     orig_priority        *          30                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 3}                   *
+_______________________________________________________________
+
+---------------------------------------------------------------
+                Thread C (where Thread B releases lock 5)
+---------------------------------------------------------------
+---------------------------------------------------------------
+*     member               *       value                      *
+---------------------------------------------------------------
+*     priority             *          50                      *
+*     orig_priority        *          50                      *
+*     is_donated           *         false                    *
+*     locks                *       {lock 5}                   *
+_______________________________________________________________
+
+---- ALGORITHMS ----
+
+>> B3: How do you ensure that the highest priority thread waiting for
+>> a lock, semaphore, or condition variable wakes up first?
+
+We would need a sorted list of waiting threads so that the last thread on the sorted list
+has the lowest priority and the first thread on the sorted list has the highest priority.
+This will ensure that the highest priority thread waiting for a lock, a semaphore, or condition
+variable will wake up first.
+
+>> B4: Describe the sequence of events when a call to lock_acquire()
+>> causes a priority donation.  How is nested donation handled?
+
+>> B5: Describe the sequence of events when lock_release() is called
+>> on a lock that a higher-priority thread is waiting for.
+
+---- SYNCHRONIZATION ----
+
+>> B6: Describe a potential race in thread_set_priority() and explain
+>> how your implementation avoids it.  Can you use a lock to avoid
+>> this race?
+
+---- RATIONALE ----
+
+>> B7: Why did you choose this design?  In what ways is it superior to
+>> another design you considered?
+
+
+              ADVANCED SCHEDULER [EXTRA CREDIT]
+              =================================
+
+---- DATA STRUCTURES ----
+
+>> C1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+---- ALGORITHMS ----
+
+>> C2: Suppose threads A, B, and C have nice values 0, 1, and 2.  Each
+>> has a recent_cpu value of 0.  Fill in the table below showing the
+>> scheduling decision and the priority and recent_cpu values for each
+>> thread after each given number of timer ticks:
+
+timer  recent_cpu    priority   thread
+ticks   A   B   C   A   B   C   to run
+-----  --  --  --  --  --  --   ------
+ 0
+ 4
+ 8
+12
+16
+20
+24
+28
+32
+36
+
+>> C3: Did any ambiguities in the scheduler specification make values
+>> in the table uncertain?  If so, what rule did you use to resolve
+>> them?  Does this match the behavior of your scheduler?
+
+>> C4: How is the way you divided the cost of scheduling between code
+>> inside and outside interrupt context likely to affect performance?
+
+---- RATIONALE ----
+
+>> C5: Briefly critique your design, pointing out advantages and
+>> disadvantages in your design choices.  If you were to have extra
+>> time to work on this part of the project, how might you choose to
+>> refine or improve your design?
+

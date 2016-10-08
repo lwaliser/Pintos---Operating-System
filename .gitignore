@@ -1,2 +1,5 @@
 *.swp
 *.swo
+src/utils/pintos-gdb
+src/userprog/Make.vars
+src/tests/threads/

@@ -25,11 +25,24 @@ test_alarm_multiple (void)
 }
 
 void
+<<<<<<< HEAD
+=======
+test_alarm_mega (void)
+{
+  test_sleep (5, 70);
+}
+
+void
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 test_alarm_many (void) 
 {
   test_sleep (5, 14);
 }
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 /* Information about the test. */
 struct sleep_test 
   {

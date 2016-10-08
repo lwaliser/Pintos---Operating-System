@@ -7,6 +7,10 @@ typedef void test_func (void);
 
 extern test_func test_alarm_single;
 extern test_func test_alarm_multiple;
+<<<<<<< HEAD
+=======
+extern test_func test_alarm_mega;
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 extern test_func test_alarm_many;
 extern test_func test_alarm_simultaneous;
 extern test_func test_alarm_priority;

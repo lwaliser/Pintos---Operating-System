@@ -1,7 +1,11 @@
 #! /bin/sh
 
 # Path to GDB macros file.  Customize for your site.
+<<<<<<< HEAD
 GDBMACROS=/usr/local/bin/gdb-macros
+=======
+GDBMACROS=/home/w/waliser/cis520/usr/local/bin/gdb-macros
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 
 # Choose correct GDB.
 if command -v i386-elf-gdb >/dev/null 2>&1; then

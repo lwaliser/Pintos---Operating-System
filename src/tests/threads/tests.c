@@ -13,6 +13,10 @@ static const struct test tests[] =
   {
     {"alarm-single", test_alarm_single},
     {"alarm-multiple", test_alarm_multiple},
+<<<<<<< HEAD
+=======
+    {"alarm-mega", test_alarm_mega},
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
     {"alarm-many", test_alarm_many},
     {"alarm-simultaneous", test_alarm_simultaneous},
     {"alarm-priority", test_alarm_priority},
@@ -39,6 +43,10 @@ static const struct test tests[] =
     {"mlfqs-nice-2", test_mlfqs_nice_2},
     {"mlfqs-nice-10", test_mlfqs_nice_10},
     {"mlfqs-block", test_mlfqs_block},
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
   };
 
 static const char *test_name;

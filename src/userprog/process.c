@@ -27,7 +27,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    thread id, or TID_ERROR if the thread cannot be created. */
 tid_t
 process_execute (const char *file_name) 
-{
+{ 
+  
   char *fn_copy;
   tid_t tid;
 
@@ -38,8 +39,12 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 
+  /*parses the file - my code */
+  char *ptr;
+  file_name = strtok_r(file_name, " ", *ptr);
+
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (name, PRI_DEFAULT, start_process, args);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
@@ -88,6 +93,11 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+  bool x = true;
+  while (x)
+    {
+       x = true;
+    }
   return -1;
 }
 
@@ -97,6 +107,7 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
+   
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -114,6 +125,7 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+  
 }
 
 /* Sets up the CPU for running user code in the current
@@ -131,7 +143,7 @@ process_activate (void)
      interrupts. */
   tss_update ();
 }
-
+
 /* We load ELF binaries.  The following definitions are taken
    from the ELF specification, [ELF1], more-or-less verbatim.  */
 
@@ -195,7 +207,7 @@ struct Elf32_Phdr
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
-static bool setup_stack (void **esp);
+static bool setup_stack (void **esp, const char* file_name, char** ptr);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
@@ -315,7 +327,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   file_close (file);
   return success;
 }
-
+
 /* load() helpers. */
 
 static bool install_page (void *upage, void *kpage, bool writable);
@@ -427,7 +439,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
 static bool
-setup_stack (void **esp) 
+setup_stack (void **esp, const char *file_name, char** ptr) 
 {
   uint8_t *kpage;
   bool success = false;
@@ -437,11 +449,49 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE;
+        *esp = PHYS_BASE - 24;
       else
         palloc_free_page (kpage);
     }
+
+  /*my code implementation */
+
+  char *tokens; //this will be the tokens of the parsed string
+  int argc = 0; //set the index of argv[] to 0;
+  char **argv; //array of arguments from the parsed string
+  for (tokens = (char *) file_name; tokens != NULL; tokens = strtok_r (NULL, " ", ptr)
+    {
+      *esp = *esp - (strlen(tokens) + 1);
+      argv[argc] = *esp;
+      argc++;
+    }
+
+  //push word-align on to the stack
+  uint8_t j = (size_t) *esp % 4; //doc said to round stack pointer down to multiple of 4 before the first push
+  *esp = *esp - j;  
+
+  //push argv[] on to the stack
+  for(int i = argc; i >= 0; i--)
+    {
+      *esp = *esp - sizeof(char *);
+    }
+
+  //push argv on to the stack
+  tokens = *esp;
+  *esp = *esp - sizeof(char **);
+  
+  //push argc on to the stack
+  *esp = *esp - sizeof(int);
+
+  //push fake return address on to the stack
+  *esp = *esp - sizeof(void *);
+
+
   return success;
+
+  
+  
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 }
 
 /* Adds a mapping from user virtual address UPAGE to kernel

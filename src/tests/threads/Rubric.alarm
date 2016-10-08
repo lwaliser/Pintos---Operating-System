@@ -1,6 +1,10 @@
 Functionality and robustness of alarm clock:
 4	alarm-single
 4	alarm-multiple
+<<<<<<< HEAD
+=======
+4       alarm-mega
+>>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 4	alarm-many
 4	alarm-simultaneous
 4	alarm-priority

@@ -89,6 +89,7 @@ struct thread
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
+    
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
@@ -97,6 +98,17 @@ struct thread
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
 #endif
+    struct list_elem sleep_elem;        /* List of threads that are sleeping/waiting */
+    int64_t sleep_time;                  /* How long to wait before executing */
+
+    int orig_priority;                  /* original priority of the current thread */
+    bool thread_donated;                /* checks whether current thread donated its priority */
+    struct list locks;                  /*this keeps track of all locks that a thread holds; it's needed for possibility of multiple donation*/
+    struct lock *blocked_lock;          /*this is used for nested donation possibility to know what the next lock is*/
+    
+
+    int priority_lock;                  /*this is used in multiple donations*/
+    #define LOCK_LEVEL 8;                /*defines a constant representing how deep we go in the nested donation algorithm*/
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */

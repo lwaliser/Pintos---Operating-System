@@ -28,4 +28,7 @@ void syscall_init (void);
       {1, (syscall_function *) close}
     }
 
+struct lock thread_lock; //a lock to make sure that only one thread is accessing the file system at a time
+bool valid_pointer (const void *); //checks to make sure you are using a valid pointer
+
 #endif /* userprog/syscall.h */
