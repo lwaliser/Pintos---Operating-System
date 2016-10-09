@@ -44,7 +44,7 @@ process_execute (const char *file_name)
   file_name = strtok_r(file_name, " ", *ptr);
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (name, PRI_DEFAULT, start_process, args);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
@@ -314,7 +314,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     }
 
   /* Set up stack. */
-  if (!setup_stack (esp))
+  if (!setup_stack (esp, file_name, ptr))
     goto done;
 
   /* Start address. */
@@ -459,7 +459,7 @@ setup_stack (void **esp, const char *file_name, char** ptr)
   char *tokens; //this will be the tokens of the parsed string
   int argc = 0; //set the index of argv[] to 0;
   char **argv; //array of arguments from the parsed string
-  for (tokens = (char *) file_name; tokens != NULL; tokens = strtok_r (NULL, " ", ptr)
+  for (tokens = (char *) file_name; tokens != NULL; tokens = strtok_r (NULL, " ", ptr))
     {
       *esp = *esp - (strlen(tokens) + 1);
       argv[argc] = *esp;
