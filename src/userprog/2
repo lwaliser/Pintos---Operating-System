@@ -1,8 +1,6 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
-#include <string.h>
-#include <stdbool.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "filesys/filesys.h"
@@ -14,7 +12,7 @@ static void copy_in (unsigned *, void *, size_t);
 static void halt (void);
 static void exit (int);
 static pid_t exec (const char *);
-static bool wait (pid_t);
+static int wait (pid_t);
 static bool create (const char*, unsigned);
 static bool remove (const char*);
 static int open (const char *);
@@ -58,7 +56,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       {2, (syscall_function *) create},
       {1, (syscall_function *) remove},
       {1, (syscall_function *) open},
-      {1, (syscall_function *) filesize}
+      {1, (syscall_function *) filesize},
       // {3, (syscall_function *) read},
       // {3, (syscall_function *) write},
       // {2, (syscall_function *) seek},
@@ -66,6 +64,9 @@ syscall_handler (struct intr_frame *f UNUSED)
       // {1, (syscall_function *) close}
     };
 
+  copy_in (&call_nr, f->esp, sizeof call_nr);
+
+/*
   copy_in (&call_nr, f->esp, sizeof call_nr);
   if (call_nr >= sizeof syscall_table / sizeof *syscall_table) 
     thread_exit ();
@@ -76,6 +77,7 @@ syscall_handler (struct intr_frame *f UNUSED)
   copy_in (args, (uint32_t *) f->esp + 1, sizeof *args * sc->arg_cnt);
 
   f->eax = sc->func (args[0], args[1], args[2]);
+*/
 
   thread_exit ();
 }
@@ -101,7 +103,7 @@ valid_pointer (const void *ptr)
 void
 copy_in (unsigned *nr, void *esp, size_t size)
 {
-  memcpy(nr, esp, size);
+  memcpy(nr, unsigned *esp, size);
 }
 
 //terminates Pintos
@@ -127,7 +129,7 @@ exec (const char *cmd_line)
 }
 
 //waits for a child process pid and retrieves the child's exit status
-bool
+int
 wait (pid_t pid)
 {
    return process_wait(NULL); //per the document.....we will implement code for process_wait in order to fulfill the wait() function

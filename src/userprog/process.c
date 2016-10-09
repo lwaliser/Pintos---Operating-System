@@ -502,8 +502,6 @@ setup_stack (void **esp, const char *file_name, char** ptr)
 
 
   return success;
-
-  
   
 }
 
