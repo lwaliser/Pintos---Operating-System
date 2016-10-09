@@ -8,7 +8,7 @@
 #include "filesys/filesys.h"
 
 static void syscall_handler (struct intr_frame *);
-static int valid_pointer (const void *);
+static bool valid_pointer (const void *);
 static void copy_in (unsigned *, void *, size_t);
 
 static void halt (void);
@@ -81,7 +81,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 }
 
 
-int
+bool
 valid_pointer (const void *ptr)
 {
   
