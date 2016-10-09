@@ -241,7 +241,6 @@ compare_ticks_between2threads(const struct list_elem *elem, const struct list_el
    tick, otherwise false. */
 static bool
 too_many_loops (unsigned loops)
->>>>>>> 56d9584a4365792708ad81594b2568b7f2b85faf
 {
   /* Wait for a timer tick. */
   int64_t start = ticks;
