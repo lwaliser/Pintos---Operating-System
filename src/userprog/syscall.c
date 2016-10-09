@@ -6,7 +6,21 @@
 #include "filesys/filesys.h"
 
 static void syscall_handler (struct intr_frame *);
-static bool valid_pointer (const void *);
+static int valid_pointer (const void *);
+
+static void halt (void);
+static void exit (int);
+static pid_t exec (const char *);
+static int wait (pid_t);
+static bool create (const char*, unsigned);
+static bool remove (const char*);
+static int open (const char *);
+static int filesize (int);
+static int read (int, void *, unsigned);
+static int write (int, const void *, unsigned);
+static void seek (int, unsigned);
+static unsigned tell (int);
+static void close (int);
 
 void
 syscall_init (void) 
@@ -42,46 +56,45 @@ syscall_handler (struct intr_frame *f UNUSED)
       {1, (syscall_function *) remove},
       {1, (syscall_function *) open},
       {1, (syscall_function *) filesize},
-      {3, (syscall_function *) read},
-      {3, (syscall_function *) write},
-      {2, (syscall_function *) seek},
-      {1, (syscall_function *) tell},
-      {1, (syscall_function *) close}
-    }
+      // {3, (syscall_function *) read},
+      // {3, (syscall_function *) write},
+      // {2, (syscall_function *) seek},
+      // {1, (syscall_function *) tell},
+      // {1, (syscall_function *) close}
+    };
 
-  /* Get the system call. */
+/*
   copy_in (&call_nr, f->esp, sizeof call_nr);
   if (call_nr >= sizeof syscall_table / sizeof *syscall_table) 
     thread_exit ();
   sc = syscall_table + call_nr;
 
-  /* Get the system call arguments. */
   ASSERT (sc->arg_cnt <= sizeof args / sizeof *args);
   memset (args, 0, sizeof args); 
   copy_in (args, (uint32_t *) f->esp + 1, sizeof *args * sc->arg_cnt);
 
-  /* Execute the system call,      
-     and set the return value. */ 
   f->eax = sc->func (args[0], args[1], args[2]);
+*/
+
   thread_exit ();
 }
 
-/*list of system calls */
 
-static void halt (void);
-static void exit (int);
-static pid_t exec (const char *);
-static int wait (pid_t);
-static bool create (const char*, unsigned);
-static bool remove (const char*);
-static int open (const char *);
-static int filesize (int);
-static int read (int, void *, unsigned);
-static int write (int, const void *, unsigned);
-static void seek (int, unsigned);
-static unsigned tell (int);
-static void close (int);
+int
+valid_pointer (const void *ptr)
+{
+  
+  int status;
 
+  if(ptr != NULL)
+    {  
+       status = (pagedir_get_page (thread_current()->pagedir, ptr)) != NULL;
+       return status;
+    }
+
+  return 0;
+
+}
 
 //terminates Pintos
 void
@@ -109,8 +122,7 @@ exec (const char *cmd_line)
 int
 wait (pid_t pid)
 {
-   
-   return process_wait(user_thread); //per the document.....we will implement code for process_wait in order to fulfill the wait() function
+   return process_wait(NULL); //per the document.....we will implement code for process_wait in order to fulfill the wait() function
 }
 
 
@@ -130,7 +142,7 @@ create (const char *file, unsigned initial_size)
    lock_acquire (&thread_lock);
    file_status = filesys_remove(file);
    lock_release (&thread_lock);
-   return status;
+   return file_status;
 }
 
 
@@ -150,7 +162,7 @@ remove (const char *file)
    lock_acquire (&thread_lock);
    file_status = filesys_remove (file);
    lock_release (&thread_lock);
-   return status;
+   return file_status;
 }
 
 
@@ -172,18 +184,3 @@ filesize (int fd)
 
 
 
-bool
-valid_pointer (const void *ptr)
-{
-  
-  bool status;
-
-  if(ptr != NULL)
-    {  
-       status = (pagedir_get_page (thread_current()->pagedir, ptr)) != NULL;
-       return status;
-    }
-
-  return false;
-
-}

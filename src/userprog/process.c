@@ -469,7 +469,7 @@ setup_stack (void **esp, const char *file_name, char** ptr)
       argv[argc] = *esp;
       argc++;
       
-      memcopy(*esp, tokens, strlen(tokens) + 1);
+      memcpy(*esp, tokens, strlen(tokens) + 1);
     }
   
   argv[argc] = 0;
@@ -477,28 +477,28 @@ setup_stack (void **esp, const char *file_name, char** ptr)
   //push word-align on to the stack
   uint8_t j = (size_t) *esp % 4; //doc said to round stack pointer down to multiple of 4 before the first push
   *esp = *esp - j; 
-  memcopy(*esp, 0, j); 
+  memcpy(*esp, 0, j); 
 
   //push argv[] on to the stack
   for(int i = argc; i >= 0; i--)
     {
       *esp = *esp - sizeof(char *);
     
-      memcopy(*esp, &argv[i], sizeof(char *));
+      memcpy(*esp, &argv[i], sizeof(char *));
     }
 
   //push argv on to the stack
   tokens = *esp;
   *esp = *esp - sizeof(char **);
-  memcopy(*esp, &tokens, sizeof(char **));
+  memcpy(*esp, &tokens, sizeof(char **));
   
   //push argc on to the stack
   *esp = *esp - sizeof(int);
-  memcopy(*esp, &argc, sizeof(int));
+  memcpy(*esp, &argc, sizeof(int));
 
   //push fake return address on to the stack
   *esp = *esp - sizeof(void *);
-  memcopy(*esp, &argv[argc],sizeof(void *));
+  memcpy(*esp, &argv[argc],sizeof(void *));
 
 
   return success;
