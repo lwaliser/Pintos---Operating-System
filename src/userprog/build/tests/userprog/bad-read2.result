@@ -1,0 +1,8 @@
+FAIL
+Kernel panic in run: PANIC at ../../threads/vaddr.h:84 in vtop(): assertion `is_kernel_vaddr (vaddr)' failed.
+Call stack: 0xc00279d4 0xc002a1f5 0xc0029641 0xc0020e5e
+Translation of call stack:
+0xc00279d4: debug_panic (.../../lib/kernel/debug.c:38)
+0xc002a1f5: pagedir_activate (...../userprog/pagedir.c:230)
+0xc0029641: process_activate (...../userprog/process.c:148)
+0xc0020e5e: thread_schedule_tail (..../../threads/thread.c:542)

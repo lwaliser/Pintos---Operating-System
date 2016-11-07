@@ -1,0 +1,27 @@
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+	LANGUAGE = "en_US:",
+	LC_ALL = (unset),
+	LC_PAPER = "es_MX.UTF-8",
+	LC_ADDRESS = "es_MX.UTF-8",
+	LC_MONETARY = "es_MX.UTF-8",
+	LC_NUMERIC = "es_MX.UTF-8",
+	LC_TELEPHONE = "es_MX.UTF-8",
+	LC_IDENTIFICATION = "es_MX.UTF-8",
+	LC_MEASUREMENT = "es_MX.UTF-8",
+	LC_TIME = "es_MX.UTF-8",
+	LC_NAME = "es_MX.UTF-8",
+	LANG = "en_US"
+    are supported and installed on your system.
+perl: warning: Falling back to a fallback locale ("en_US").
+Use of literal control characters in variable names is deprecated at /home/b/benstegeman/cis520/pintos/src/utils/pintos line 909.
+Prototype mismatch: sub main::SIGVTALRM () vs none at /home/b/benstegeman/cis520/pintos/src/utils/pintos line 933.
+Constant subroutine SIGVTALRM redefined at /home/b/benstegeman/cis520/pintos/src/utils/pintos line 925.
+00000000000i[     ] reading configuration from bochsrc.txt
+00000000000e[     ] user_shortcut: old-style syntax detected
+00000000000i[     ] installing nogui module as the Bochs GUI
+00000000000i[     ] using log file bochsout.txt
+========================================================================
+Bochs is exiting with the following message:
+[UNMP ] Shutdown port: shutdown requested
+========================================================================
